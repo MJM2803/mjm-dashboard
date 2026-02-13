@@ -20,7 +20,7 @@ if submit:
         "data": data_spesa,
         "tipo": "uscita",
         "soggetto": "spesa",
-        "importo": -abs(importo_spesa),
+        "importo": importo_spesa,
         "note": f"{categoria} - {descrizione}"
     })
 
