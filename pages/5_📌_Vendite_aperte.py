@@ -12,20 +12,38 @@ if vendite.empty:
     st.info("Nessuna vendita registrata.")
     st.stop()
 
-# Calcolo totale rate per vendita
+# ============================
+# NORMALIZZAZIONE TIPI
+# ============================
+vendite["id"] = pd.to_numeric(vendite["id"], errors="coerce")
+
+if not rate.empty:
+    rate["id_vendita"] = pd.to_numeric(rate["id_vendita"], errors="coerce")
+else:
+    rate = pd.DataFrame(columns=["id_vendita", "importo"])
+
+# ============================
+# CALCOLO TOTALE RATE PER VENDITA
+# ============================
 if not rate.empty:
     rate_group = rate.groupby("id_vendita")["importo"].sum().reset_index()
 else:
     rate_group = pd.DataFrame(columns=["id_vendita", "importo"])
 
-# Merge vendite + rate
+# ============================
+# MERGE SICURO
+# ============================
 df = vendite.merge(rate_group, left_on="id", right_on="id_vendita", how="left")
 df["importo"] = df["importo"].fillna(0)
 
-# Calcolo residuo
+# ============================
+# CALCOLO RESIDUO
+# ============================
 df["residuo"] = df["prezzo"] - df["acconto"] - df["importo"]
 
-# Filtra vendite aperte
+# ============================
+# FILTRO VENDITE APERTE
+# ============================
 aperte = df[df["residuo"] > 0]
 
 st.subheader("🔍 Filtri")
@@ -42,6 +60,9 @@ if f_cliente:
 if f_prodotto:
     df_view = df_view[df_view["prodotto"].str.contains(f_prodotto, case=False, na=False)]
 
+# ============================
+# TABELLA RISULTATI
+# ============================
 st.subheader("📋 Vendite ancora aperte")
 
 if df_view.empty:
@@ -52,7 +73,11 @@ else:
         "acconto", "importo", "residuo"
     ]])
 
+# ============================
+# TOTALE RESIDUO
+# ============================
 st.subheader("📊 Totale residuo")
 
 tot_residuo = df_view["residuo"].sum()
+
 st.metric("Residuo totale da incassare", f"€ {tot_residuo:,.2f}")
