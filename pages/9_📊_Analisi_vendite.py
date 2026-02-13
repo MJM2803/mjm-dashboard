@@ -5,28 +5,41 @@ from supabase_utils import supabase_select
 
 st.title("📊 Analisi vendite")
 
-# Carico dati
-vendite = pd.DataFrame(supabase_select("vendite"))
-rate = pd.DataFrame(supabase_select("pagamenti_rate"))
-spese = pd.DataFrame(supabase_select("spese"))
-mov = pd.DataFrame(supabase_select("movimenti_cassa"))
+# ============================
+# FUNZIONE DI CARICAMENTO ROBUSTA
+# ============================
+def load_table(name):
+    data = supabase_select(name)
+    return pd.DataFrame(data) if isinstance(data, list) else pd.DataFrame()
+
+# ============================
+# CARICO I DATI
+# ============================
+vendite = load_table("vendite")
+rate = load_table("pagamenti_rate")
+mov = load_table("movimenti_cassa")  # contiene ENTRATE e USCITE
 
 if vendite.empty:
     st.info("Nessuna vendita registrata.")
     st.stop()
 
-# Pulizia date
+# ============================
+# NORMALIZZAZIONE DATE
+# ============================
 if "data" in vendite.columns:
     vendite["data"] = vendite["data"].replace("", None)
 
-# ============================
-# 📅 Entrate mensili
-# ============================
+if not mov.empty:
+    mov["data"] = mov["data"].astype(str)
+    mov["mese"] = mov["data"].str.slice(0, 7)
+    mov["importo"] = pd.to_numeric(mov["importo"], errors="coerce")
 
+# ============================
+# 📅 ENTRATE MENSILI
+# ============================
 st.subheader("📅 Entrate mensili")
 
 if not mov.empty:
-    mov["mese"] = mov["data"].str.slice(0, 7)
     entrate = mov[mov["tipo"] == "entrata"].groupby("mese")["importo"].sum().reset_index()
 
     if not entrate.empty:
@@ -38,14 +51,12 @@ else:
     st.info("Nessun movimento di cassa registrato.")
 
 # ============================
-# 📉 Uscite mensili
+# 📉 USCITE MENSILI
 # ============================
-
 st.subheader("📉 Uscite mensili")
 
 if not mov.empty:
     uscite = mov[mov["tipo"] == "uscita"].copy()
-    uscite["mese"] = uscite["data"].str.slice(0, 7)
     uscite_mese = uscite.groupby("mese")["importo"].sum().reset_index()
 
     if not uscite_mese.empty:
@@ -57,13 +68,11 @@ else:
     st.info("Nessun movimento di cassa registrato.")
 
 # ============================
-# 💰 Saldo mensile
+# 💰 SALDO MENSILE
 # ============================
-
 st.subheader("💰 Saldo mensile")
 
 if not mov.empty:
-    mov["mese"] = mov["data"].str.slice(0, 7)
     saldo_mese = mov.groupby("mese")["importo"].sum().reset_index()
 
     fig = px.line(saldo_mese, x="mese", y="importo", markers=True, title="Saldo mensile")
@@ -72,9 +81,8 @@ else:
     st.info("Nessun movimento di cassa registrato.")
 
 # ============================
-# 📦 Vendite per prodotto
+# 📦 VENDITE PER PRODOTTO
 # ============================
-
 st.subheader("📦 Vendite per prodotto")
 
 vend_prod = vendite.groupby("prodotto")["prezzo"].sum().reset_index()
@@ -86,23 +94,24 @@ else:
     st.info("Nessuna vendita registrata.")
 
 # ============================
-# 💵 Guadagno per prodotto
+# 💵 GUADAGNO PER PRODOTTO
 # ============================
-
 st.subheader("💵 Guadagno per prodotto")
 
-guad_prod = vendite.groupby("prodotto")["guadagno"].sum().reset_index()
+if "guadagno" in vendite.columns:
+    guad_prod = vendite.groupby("prodotto")["guadagno"].sum().reset_index()
 
-if not guad_prod.empty:
-    fig = px.bar(guad_prod, x="prodotto", y="guadagno", title="Guadagno per prodotto", text_auto=True)
-    st.plotly_chart(fig, use_container_width=True)
+    if not guad_prod.empty:
+        fig = px.bar(guad_prod, x="prodotto", y="guadagno", title="Guadagno per prodotto", text_auto=True)
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Nessun guadagno registrato.")
 else:
-    st.info("Nessun guadagno registrato.")
+    st.info("La colonna 'guadagno' non è presente nella tabella vendite.")
 
 # ============================
-# 👥 Vendite per cliente
+# 👥 VENDITE PER CLIENTE
 # ============================
-
 st.subheader("👥 Vendite per cliente")
 
 vend_cliente = vendite.groupby("cliente")["prezzo"].sum().reset_index()
@@ -114,9 +123,8 @@ else:
     st.info("Nessuna vendita registrata.")
 
 # ============================
-# 🟩 Extra per mese
+# 🟩 EXTRA PER MESE
 # ============================
-
 st.subheader("🟩 Extra per mese")
 
 if vendite["data"].notna().any():
