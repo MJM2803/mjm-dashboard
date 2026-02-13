@@ -36,7 +36,9 @@ if submit:
 
 st.subheader("📋 Storico spese")
 
-spese = pd.DataFrame(supabase_select("spese"))
+# --- FIX ROBUSTO ---
+raw_spese = supabase_select("spese")
+spese = pd.DataFrame(raw_spese) if isinstance(raw_spese, list) else pd.DataFrame()
 
 if spese.empty:
     st.info("Nessuna spesa registrata.")
