@@ -45,5 +45,5 @@ saldo = df["importo"].sum()
 
 col1, col2, col3 = st.columns(3)
 col1.metric("Entrate", f"€ {tot_entrate:,.2f}")
-col2.metric("Uscite", f"€ {(tot_uscite):,.2f}")
+col2.metric("Uscite", f"€ {abs(tot_uscite):,.2f}")
 col3.metric("Saldo", f"€ {saldo:,.2f}")
