@@ -13,6 +13,12 @@ if mov.empty:
 # Pulizia dati
 mov["data"] = mov["data"].replace("", None)
 
+# Applico il segno corretto ai movimenti
+mov["importo_signed"] = mov.apply(
+    lambda row: -row["importo"] if row["tipo"] == "uscita" else row["importo"],
+    axis=1
+)
+
 st.subheader("📋 Lista movimenti")
 
 # Filtri
@@ -41,7 +47,9 @@ st.subheader("📊 Totali")
 
 tot_entrate = df[df["tipo"] == "entrata"]["importo"].sum()
 tot_uscite = df[df["tipo"] == "uscita"]["importo"].sum()
-saldo = df["importo"].sum()
+
+# Saldo corretto usando importo_signed
+saldo = df["importo_signed"].sum()
 
 col1, col2, col3 = st.columns(3)
 col1.metric("Entrate", f"€ {tot_entrate:,.2f}")
