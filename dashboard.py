@@ -8,7 +8,7 @@ st.set_page_config(page_title="MJM Dashboard", layout="wide")
 st.title("🏠 Panoramica generale")
 
 # ============================
-# FUNZIONE DI CARICAMENTO ROBUSTA
+# FUNZIONE DI CARICAMENTO
 # ============================
 def load_table(name):
     data = supabase_select(name)
@@ -17,17 +17,25 @@ def load_table(name):
 # ============================
 # CARICO I DATI
 # ============================
-mov = load_table("movimenti_cassa")   # contiene entrate e uscite
+mov = load_table("movimenti_cassa")
 vendite = load_table("vendite")
 
 # ============================
 # CALCOLI PRINCIPALI
 # ============================
-saldo = mov["importo"].sum() if not mov.empty else 0
+if not mov.empty:
+    # Applico il segno corretto ai movimenti
+    mov["importo_signed"] = mov.apply(
+        lambda row: -row["importo"] if row["tipo"] == "uscita" else row["importo"],
+        axis=1
+    )
+    saldo = mov["importo_signed"].sum()
+else:
+    saldo = 0
+
 totale_vendite = vendite["prezzo"].sum() if not vendite.empty else 0
 totale_guadagno = vendite["guadagno"].sum() if ("guadagno" in vendite.columns and not vendite.empty) else 0
 
-# Spese = movimenti con tipo = "uscita"
 if not mov.empty:
     spese = mov[mov["tipo"] == "uscita"]
     totale_spese = spese["importo"].sum()
@@ -57,7 +65,7 @@ if not mov.empty:
     fig = px.line(
         mov,
         x="data",
-        y="importo",
+        y="importo_signed",
         title="Andamento movimenti cassa",
         markers=True
     )
