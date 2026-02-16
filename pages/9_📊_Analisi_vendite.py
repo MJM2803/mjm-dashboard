@@ -26,12 +26,15 @@ if vendite.empty:
 # ============================
 # NORMALIZZAZIONE DATE
 # ============================
+# Vendite: data in formato dd/mm/YYYY
 if "data" in vendite.columns:
     vendite["data"] = vendite["data"].replace("", None)
+    vendite["data"] = pd.to_datetime(vendite["data"], format="%d/%m/%Y", errors="coerce")
 
+# Movimenti cassa
 if not mov.empty:
-    mov["data"] = mov["data"].astype(str)
-    mov["mese"] = mov["data"].str.slice(0, 7)
+    mov["data"] = pd.to_datetime(mov["data"], format="%d/%m/%Y", errors="coerce")
+    mov["mese"] = mov["data"].dt.strftime("%Y-%m")
     mov["importo"] = pd.to_numeric(mov["importo"], errors="coerce")
 
 # ============================
@@ -128,7 +131,7 @@ else:
 st.subheader("🟩 Extra per mese")
 
 if vendite["data"].notna().any():
-    vendite["mese"] = vendite["data"].str.slice(0, 7)
+    vendite["mese"] = vendite["data"].dt.strftime("%Y-%m")
     extra_mese = vendite.groupby("mese")["extra"].sum().reset_index()
 
     fig = px.line(extra_mese, x="mese", y="extra", markers=True, title="Extra per mese")
