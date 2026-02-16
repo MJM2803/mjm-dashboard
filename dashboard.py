@@ -23,14 +23,21 @@ vendite = load_table("vendite")
 # ============================
 # CALCOLI PRINCIPALI
 # ============================
+saldo = 0
+totale_vendite = 0
+totale_guadagno = 0
+totale_spese = 0
+
+# --- Movimenti cassa ---
 if not mov.empty:
     mov["importo_signed"] = mov.apply(
         lambda row: -row["importo"] if row["tipo"] == "uscita" else row["importo"],
         axis=1
     )
     saldo = mov["importo_signed"].sum()
-else:
-    saldo = 0
 
-totale_vendite = vendite["prezzo"].sum() if not vendite.empty else 0
-totale_guadagno
+    spese = mov[mov["tipo"] == "uscita"]
+    totale_spese = spese["importo"].sum()
+
+# --- Vendite ---
+if not
