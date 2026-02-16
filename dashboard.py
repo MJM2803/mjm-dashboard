@@ -24,7 +24,6 @@ vendite = load_table("vendite")
 # CALCOLI PRINCIPALI
 # ============================
 if not mov.empty:
-    # Applico il segno corretto ai movimenti
     mov["importo_signed"] = mov.apply(
         lambda row: -row["importo"] if row["tipo"] == "uscita" else row["importo"],
         axis=1
@@ -34,41 +33,4 @@ else:
     saldo = 0
 
 totale_vendite = vendite["prezzo"].sum() if not vendite.empty else 0
-totale_guadagno = vendite["guadagno"].sum() if ("guadagno" in vendite.columns and not vendite.empty) else 0
-
-if not mov.empty:
-    spese = mov[mov["tipo"] == "uscita"]
-    totale_spese = spese["importo"].sum()
-else:
-    totale_spese = 0
-
-# ============================
-# KPI
-# ============================
-col1, col2, col3, col4 = st.columns(4)
-
-col1.metric("Saldo cassa", f"€ {saldo:,.2f}")
-col2.metric("Totale vendite", f"€ {totale_vendite:,.2f}")
-col3.metric("Guadagno totale", f"€ {totale_guadagno:,.2f}")
-col4.metric("Totale spese", f"€ {totale_spese:,.2f}")
-
-# ============================
-# GRAFICO MOVIMENTI CASSA
-# ============================
-st.subheader("📈 Andamento movimenti di cassa")
-
-if not mov.empty:
-    mov["data"] = mov["data"].astype(str)
-    mov = mov[mov["data"] != ""]
-    mov = mov.dropna(subset=["data"])
-
-    fig = px.line(
-        mov,
-        x="data",
-        y="importo_signed",
-        title="Andamento movimenti cassa",
-        markers=True
-    )
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.info("Nessun movimento registrato.")
+totale_guadagno
