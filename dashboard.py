@@ -62,8 +62,8 @@ st.subheader("📈 Andamento movimenti di cassa")
 
 if not mov.empty:
 
-    # Conversione corretta della data (formato dd/mm/YYYY)
-    mov["data"] = pd.to_datetime(mov["data"], format="%d/%m/%Y", errors="coerce")
+    # Conversione automatica della data (funziona con YYYY/MM/DD)
+    mov["data"] = pd.to_datetime(mov["data"], errors="coerce")
 
     # Rimuovo eventuali date non valide
     mov = mov.dropna(subset=["data"])
