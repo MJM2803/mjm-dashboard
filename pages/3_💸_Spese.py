@@ -7,7 +7,10 @@ st.title("💸 Spese")
 st.subheader("➕ Inserisci una nuova spesa")
 
 with st.form("nuova_spesa"):
-    data_spesa = st.text_input("Data spesa (es: 2026-01-01)")
+
+    # Date picker
+    data_spesa_input = st.date_input("Data spesa", format="DD/MM/YYYY")
+
     categoria = st.text_input("Categoria (es: manutenzione, benzina, ecc.)")
     descrizione = st.text_input("Descrizione")
     importo_spesa = st.number_input("Importo spesa", min_value=0.0)
@@ -15,6 +18,10 @@ with st.form("nuova_spesa"):
     submit = st.form_submit_button("Salva spesa")
 
 if submit:
+
+    # Conversione data → formato YYYY-MM-DD
+    data_spesa = data_spesa_input.strftime("%Y-%m-%d")
+
     # Salvo SOLO in movimenti_cassa
     supabase_insert("movimenti_cassa", {
         "data": data_spesa,
