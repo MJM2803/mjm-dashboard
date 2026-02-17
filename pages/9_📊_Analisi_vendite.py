@@ -26,14 +26,16 @@ if vendite.empty:
 # ============================
 # NORMALIZZAZIONE DATE
 # ============================
-# Vendite: data in formato dd/mm/YYYY
+
+# --- Vendite ---
 if "data" in vendite.columns:
     vendite["data"] = vendite["data"].replace("", None)
-    vendite["data"] = pd.to_datetime(vendite["data"], format="%d/%m/%Y", errors="coerce")
+    vendite["data"] = pd.to_datetime(vendite["data"], errors="coerce")
 
-# Movimenti cassa
+# --- Movimenti cassa ---
 if not mov.empty:
-    mov["data"] = pd.to_datetime(mov["data"], format="%d/%m/%Y", errors="coerce")
+    mov["data"] = pd.to_datetime(mov["data"], errors="coerce")
+    mov = mov.dropna(subset=["data"])
     mov["mese"] = mov["data"].dt.strftime("%Y-%m")
     mov["importo"] = pd.to_numeric(mov["importo"], errors="coerce")
 
