@@ -33,7 +33,9 @@ with st.form("nuova_rata"):
     scelta = st.selectbox("Seleziona vendita", list(mappa_vendite.keys()))
     cliente_rata = st.text_input("Cliente (opzionale, se diverso)")
     importo_rata = st.number_input("Importo rata", min_value=0.0)
-    data_rata = st.text_input("Data rata (es: 2026-02-13)")
+
+    # Date picker
+    data_rata_input = st.date_input("Data rata", format="DD/MM/YYYY")
 
     submit = st.form_submit_button("Salva rata")
 
@@ -44,7 +46,14 @@ if submit:
     if not cliente_rata:
         cliente_rata = vendita_sel["cliente"]
 
-    # Inserisco rata
+    # ============================
+    # CONVERSIONE DATA
+    # ============================
+    data_rata = data_rata_input.strftime("%Y-%m-%d")
+
+    # ============================
+    # INSERISCO RATA
+    # ============================
     supabase_insert("pagamenti_rate", {
         "id_vendita": id_vendita,
         "cliente": cliente_rata,
@@ -52,7 +61,9 @@ if submit:
         "data": data_rata
     })
 
-    # Movimento di cassa
+    # ============================
+    # MOVIMENTO DI CASSA
+    # ============================
     supabase_insert("movimenti_cassa", {
         "data": data_rata,
         "tipo": "entrata",
@@ -61,7 +72,9 @@ if submit:
         "note": f"Rata vendita {id_vendita} - {cliente_rata}"
     })
 
-    # Ricalcolo residuo
+    # ============================
+    # RICALCOLO RESIDUO
+    # ============================
     raw_rate = supabase_select("pagamenti_rate")
     rate = pd.DataFrame(raw_rate) if isinstance(raw_rate, list) else pd.DataFrame()
 
@@ -82,15 +95,12 @@ st.subheader("📋 Riepilogo rate per vendita")
 if rate.empty:
     st.info("Nessuna rata registrata.")
 else:
-    # Fix tipi
     rate["id_vendita"] = pd.to_numeric(rate["id_vendita"], errors="coerce")
     vendite["id"] = pd.to_numeric(vendite["id"], errors="coerce")
 
-    # Rinomina colonne per evitare duplicati
     rate = rate.rename(columns={"cliente": "cliente_rata", "data": "data_rata"})
     vendite = vendite.rename(columns={"cliente": "cliente_vendita"})
 
-    # Merge sicuro
     df = rate.merge(
         vendite,
         left_on="id_vendita",
@@ -98,7 +108,6 @@ else:
         how="left"
     )
 
-    # Selezione colonne sicura
     colonne = []
     for c in ["id_vendita", "cliente_rata", "cliente_vendita", "prodotto", "importo", "data_rata"]:
         if c in df.columns:
